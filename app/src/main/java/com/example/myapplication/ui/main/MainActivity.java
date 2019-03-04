@@ -17,9 +17,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         flFrameContainer = findViewById(R.id.flFrameContainer);
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(flFrameContainer.getId(), new MainFragment());
-        ft.commit();
+        if (savedInstanceState == null) {
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.replace(flFrameContainer.getId(), new MainFragment());
+            ft.commit();
+        }
     }
 }
