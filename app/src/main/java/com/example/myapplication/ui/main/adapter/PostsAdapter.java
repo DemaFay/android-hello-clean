@@ -18,10 +18,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.ViewHolder> 
 
     private List<PostModel> posts = new ArrayList<>();
 
-    public PostsAdapter(List<PostModel> posts) {
-        this.posts = posts;
-    }
-
     public void setPosts(List<PostModel> posts) {
         this.posts = posts;
         notifyDataSetChanged();

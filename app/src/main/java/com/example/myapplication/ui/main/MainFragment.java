@@ -14,22 +14,35 @@ import android.widget.Toast;
 import com.example.myapplication.App;
 import com.example.myapplication.PostModel;
 import com.example.myapplication.R;
+import com.example.myapplication.model.interactor.MainInteractor;
+import com.example.myapplication.model.repository.main.MainRepository;
+import com.example.myapplication.presentation.main.MainPresenter;
+import com.example.myapplication.presentation.main.MainView;
 import com.example.myapplication.ui.main.adapter.PostsAdapter;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-public class MainFragment extends Fragment {
+public class MainFragment extends Fragment implements MainView {
 
     private static final int LAYOUT = R.layout.main_fragment;
 
     View view;
     RecyclerView rvPosts;
-    List<PostModel> posts = new ArrayList<>();
+    LinearLayoutManager layoutManager;
+    PostsAdapter adapter;
+
+    MainPresenter presenter;
+
+    private String RECYCLER_POSITION = "recycler_position";
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+        if (presenter == null) {
+            presenter = new MainPresenter(this, new MainInteractor(new MainRepository(App.getApi())));
+        }
+    }
 
     @Nullable
     @Override
@@ -42,23 +55,37 @@ public class MainFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         rvPosts = view.findViewById(R.id.rvPosts);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager = new LinearLayoutManager(getContext());
         rvPosts.setLayoutManager(layoutManager);
 
-        PostsAdapter adapter = new PostsAdapter(posts);
+        adapter = new PostsAdapter();
         rvPosts.setAdapter(adapter);
 
-        App.getApi().getData("bash", 50).enqueue(new Callback<List<PostModel>>() {
-            @Override
-            public void onResponse(Call<List<PostModel>> call, Response<List<PostModel>> response) {
-                posts.addAll(response.body());
-                rvPosts.getAdapter().notifyDataSetChanged();
-            }
+        if (savedInstanceState != null) {
+            layoutManager.scrollToPosition(savedInstanceState.getInt(RECYCLER_POSITION));
+        }
 
+        presenter.setData();
+    }
+
+    @Override
+    public void setList(final List<PostModel> models) {
+        rvPosts.post(new Runnable() {
             @Override
-            public void onFailure(Call<List<PostModel>> call, Throwable t) {
-                Toast.makeText(getContext(), "An error occurred during networking", Toast.LENGTH_SHORT).show();
+            public void run() {
+                adapter.setPosts(models);
             }
         });
+    }
+
+    @Override
+    public void showErrorMessage(String message) {
+        Toast.makeText(getContext(), "Error: " + message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(RECYCLER_POSITION, layoutManager.findFirstVisibleItemPosition());
     }
 }
